@@ -82,8 +82,8 @@ class Kaleido:
         return self._processed
 
     def run(self):
-        print("Press 'q' to quit, or 's' to save the current result.")
-        while (key := (cv2.waitKey(10) & 0xFF)) != ord('q'):
+        print("Press 'q' or ESC to quit, or 's' to save the current result.")
+        while (key := (cv2.waitKey(10) & 0xFF)) not in (ord('q'), 27):
             if key == ord('s'):
                 time = datetime.strftime(datetime.now(),
                                          '%Y-%m-%d_%H-%M-%S.jpg')
