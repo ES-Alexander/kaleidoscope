@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import cv2
 import numpy as np
 
 def kaleido(img, N=10, out='same', r_start=0, r_out=0, c_in=None, c_out=None,
@@ -24,12 +25,28 @@ def kaleido(img, N=10, out='same', r_start=0, r_out=0, c_in=None, c_out=None,
     c_y, c_x = c_in if c_in is not None else \
         (c // 2 for c in (in_rows, in_cols))
 
+    r_start %= 2 * np.pi
+    width = np.pi / N
+    r_end = r_start + width
+
     if out == 'same':
         out = np.empty((in_rows, in_cols, 3), dtype=np.uint8)
     elif out == 'full':
-        s = int(np.ceil(2 * np.sqrt(max(c_y, in_rows-c_y)**2
-                                    + max(c_x, in_cols-c_x)**2) * scale))
-        #scale = 1
+        quarter = np.pi / 2
+        r_mid = (r_start + r_end) / 2
+        if 0 <= r_mid < quarter:
+            dy = in_rows - c_y
+            dx = in_cols - c_x
+        elif quarter <= r_mid <= 2 * quarter:
+            dy = in_rows - c_y
+            dx = c_x
+        elif 2 * quarter <= r_mid <= 3 * quarter:
+            dy = c_y
+            dx = c_x
+        else:
+            dy = c_y
+            dx = in_cols - c_x
+        s = int(np.ceil(2 * np.sqrt(dx*dx + dy*dy) * scale))
         out = np.empty((s, s, 3), dtype=np.uint8)
     elif isinstance(out, int):
         out = np.empty((out, out, 3), dtype=np.uint8)
@@ -44,25 +61,24 @@ def kaleido(img, N=10, out='same', r_start=0, r_out=0, c_in=None, c_out=None,
     Yp -= co_y
 
     # calculate magnitude and angle of each sample point in input image
-    width = np.pi / N
     mag_p = np.sqrt(Xp*Xp + Yp*Yp) / scale
     theta_p = abs(((np.arctan2(Xp, Yp) - r_out) % (2 * width)) - width) \
         + r_start
 
     # convert to cartesian sample points in input image, offset by c_in
-    Yp[:] = (mag_p * np.sin(theta_p) + c_y).astype(np.int64)
-    Xp[:] = (mag_p * np.cos(theta_p) + c_x).astype(np.int64)
+    Y = (mag_p * np.sin(theta_p) + c_y).astype(np.int64)
+    X = (mag_p * np.cos(theta_p) + c_x).astype(np.int64)
 
     # set outside valid region pixels to black (avoid index error)
     # temporarily use pixel [0,0] of input image
     old = img[0,0].copy()
-    img[0,0] = 0,0,0
-    bad = (Yp < 0) | (Yp >= in_rows) | (Xp < 0) | (Xp >= in_cols)
-    Yp[bad] = 0
-    Xp[bad] = 0
+    img[0,0] = (0, 0, 0)
+    bad = (Y < 0) | (Y >= in_rows) | (X < 0) | (X >= in_cols)
+    Y[bad] = 0
+    X[bad] = 0
 
     # sample input image to set each pixel of out
-    out[:] = img[Yp, Xp]
+    out[:] = img[Y, X]
 
     img[0,0] = old # restore input [0,0] to its initial value
 
@@ -74,16 +90,14 @@ def kaleido(img, N=10, out='same', r_start=0, r_out=0, c_in=None, c_out=None,
         cv2.line(img, (c_x, c_y), (int(c_x + l*np.cos(r_start)),
                                    int(c_y + l*np.sin(r_start))),
                  (255,0,0), 2)
-        r_max = r_start + width
-        cv2.line(img, (c_x, c_y), (int(c_x + l * np.cos(r_max)),
-                                   int(c_y + l * np.sin(r_max))),
+        cv2.line(img, (c_x, c_y), (int(c_x + l * np.cos(r_end)),
+                                   int(c_y + l * np.sin(r_end))),
                  (0,255,0), 2)
 
     return out
 
 
 if __name__ == '__main__':
-    import cv2
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
