@@ -19,6 +19,8 @@ parameters as desired.
 ## Example
 Run `interactive.py` (`-h` for help with parameters), and modify the sliders to
 change the kaleidoscope parameters.
+![interactive example](https://github.com/ES-Alexander/kaleidoscope/blob/main/interactive_example.png?raw=true)
+
 
 ### TODO
 - Add [pythonic-cv](https://github.com/ES-Alexander/pythonic-cv) to enable an interactive
