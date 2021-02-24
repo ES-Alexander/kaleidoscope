@@ -114,7 +114,7 @@ class Kaleido:
                 self._latest = cv2.hconcat((base, processed))
             self._changed = False
 
-        display = self._latest if self._show_input else processed
+        display = self._latest if self._show_input else self._processed
         cv2.imshow(self._window, display)
 
     def __repr__(self):
