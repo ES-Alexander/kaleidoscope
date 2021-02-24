@@ -82,6 +82,7 @@ class Kaleido:
         return self._processed
 
     def run(self):
+        print("Press 'q' to quit, or 's' to save the current result.")
         while (key := (cv2.waitKey(10) & 0xFF)) != ord('q'):
             if key == ord('s'):
                 time = datetime.strftime(datetime.now(),
