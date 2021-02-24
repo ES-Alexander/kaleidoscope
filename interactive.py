@@ -7,6 +7,7 @@ import cv2
 
 class Kaleido:
     def __init__(self, filename, show_input, annotate, window='kaleidoscope'):
+        self._path  = filename
         self._image = cv2.imread(filename)
         self._init_variables(show_input, annotate)
         self._init_gui(window)
@@ -84,7 +85,7 @@ class Kaleido:
         while (key := (cv2.waitKey(10) & 0xFF)) != ord('q'):
             if key == ord('s'):
                 time = datetime.strftime(datetime.now(),
-                                         '%Y-%m-%d %H:%M:%S.jpg')
+                                         '%Y-%m-%d %H_%M_%S.jpg')
                 if self._show_input:
                     cv2.imwrite(f'kaleido-{time}', self._latest)
                 cv2.imwrite(f'result-{time}', self._processed)
@@ -117,8 +118,8 @@ class Kaleido:
 
     def __repr__(self):
         cls = self.__class__.__name__
-        return ('{cls}(N={N}, out={out}, r_start={r_start}, r_out={r_out}, '
-                'c_in={c_in}, c_out={c_out}, scale={scale}, '
+        return ('{cls}(image={_path}, N={N}, out={out}, r_start={r_start}, '
+                'r_out={r_out}, c_in={c_in}, c_out={c_out}, scale={scale}, '
                 'annotate={annotate})').format(cls=cls, **self.__dict__)
 
 
