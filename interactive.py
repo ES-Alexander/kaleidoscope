@@ -85,10 +85,10 @@ class Kaleido:
         while (key := (cv2.waitKey(10) & 0xFF)) != ord('q'):
             if key == ord('s'):
                 time = datetime.strftime(datetime.now(),
-                                         '%Y-%m-%d %H_%M_%S.jpg')
+                                         '%Y-%m-%d_%H-%M-%S.jpg')
                 if self._show_input:
-                    cv2.imwrite(f'kaleido-{time}', self._latest)
-                cv2.imwrite(f'result-{time}', self._processed)
+                    cv2.imwrite(f'kaleido_{time}', self._latest)
+                cv2.imwrite(f'result_{time}', self._processed)
             self._display()
         print(self)
 
