@@ -1,7 +1,7 @@
 # kaleidoscope
 A kaleidoscope effect for images and videos.
 
-Implements the functionality displayed in 
+Implements a Python version of the functionality displayed in 
 [this GIMP tutorial](https://www.youtube.com/watch?v=C6Y9Yh4BM1Q), plus some extra
 configurability.   
 Test image is taken from that tutorial video for comparison.
