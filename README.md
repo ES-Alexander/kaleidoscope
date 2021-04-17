@@ -18,10 +18,14 @@ parameters as desired.
 
 ## Example
 Run `interactive.py` (`-h` for help with parameters), and modify the sliders to
-change the kaleidoscope parameters.
+change the kaleidoscope parameters. When not using the `-i` flag, click and drag
+on the input image (left) to change the center position and angle of the kaleidoscope.
 ![interactive example](https://github.com/ES-Alexander/kaleidoscope/blob/main/interactive_example.png?raw=true)
 
+It's also possible to use the `-v` flag to run as a filter on a connected camera, with
+`-f` to specify the camera ID (probably `0`). Requires 
+[pythonic-cv](https://github.com/ES-Alexander/pythonic-cv) to be installed.
 
 ### TODO
-- Add [pythonic-cv](https://github.com/ES-Alexander/pythonic-cv) to enable an interactive
-kaleidoscope effect in video playback.
+- Enable filter on video files (non-digit filenames)
+- Enable recording video output (somehow deal with changing size)?
