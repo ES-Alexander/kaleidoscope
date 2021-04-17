@@ -3,27 +3,11 @@
 import cv2
 import numpy as np
 
-def kaleido(img, N=10, out='same', r_start=0, r_out=0, c_in=None, c_out=None,
-            scale=1, annotate=False):
-    ''' Return a kaleidoscope from img.
-
-    'img' is a 3-channel uint8 numpy array of image pixels.
-    'N' is the number of mirrors.
-    'out' can be 'same', 'full', or a 3-channel uint8 array to fill.
-    'r_start' is the selection rotation from the input image [clock radians].
-    'r_out' is the rotation of the output image result [clock radians].
-    'c_in' is the origin point of the sample sector from the input image.
-        If None defaults to the center of the input image [c_y,c_x].
-    'c_out' is the center of the kaleidoscope in the output image. If None
-        defaults to the center point of the output image [c_y, c_x].
-    'scale' is the scale of the output kaleidoscope. Default 1.
-    'annotate' is a boolean denoting whether to annotate the input image to
-        display the selected region. Default True.
-
-    '''
+def core(img, N, out, r_start, r_out, c_in, c_out, scale):
     in_rows, in_cols = img.shape[:2]
-    c_y, c_x = c_in if c_in is not None else \
-        (c // 2 for c in (in_rows, in_cols))
+    if c_in is None:
+        c_in = (dim // 2 for dim in (in_rows, in_cols))
+    c_y, c_x = c_in
 
     r_start %= 2 * np.pi
     width = np.pi / N
@@ -48,21 +32,22 @@ def kaleido(img, N=10, out='same', r_start=0, r_out=0, c_in=None, c_out=None,
             dx = in_cols - c_x
         s = int(np.ceil(2 * np.sqrt(dx*dx + dy*dy) * scale))
         out = np.empty((s, s, 3), dtype=np.uint8)
-    elif isinstance(out, int):
+    else:
         out = np.empty((out, out, 3), dtype=np.uint8)
 
     out_rows, out_cols = out.shape[:2]
-    co_y, co_x = c_out if c_out is not None else \
-        (c // 2 for c in (out_rows, out_cols))
+    if c_out is None:
+        c_out = (dim // 2 for dim in (out_rows, out_cols))
+    co_y, co_x = c_out
 
     # create sample points and offset to center of output image
-    Xp, Yp = np.meshgrid(range(out_cols), range(out_rows))
+    Xp, Yp = np.meshgrid(np.arange(out_cols), np.arange(out_rows))
     Xp -= co_x
     Yp -= co_y
 
     # calculate magnitude and angle of each sample point in input image
     mag_p = np.sqrt(Xp*Xp + Yp*Yp) / scale
-    theta_p = abs(((np.arctan2(Xp, Yp) - r_out) % (2 * width)) - width) \
+    theta_p = np.abs(((np.arctan2(Xp, Yp) - r_out) % (2 * width)) - width) \
         + r_start
 
     # convert to cartesian sample points in input image, offset by c_in
@@ -73,6 +58,7 @@ def kaleido(img, N=10, out='same', r_start=0, r_out=0, c_in=None, c_out=None,
     # temporarily use pixel [0,0] of input image
     old = img[0,0].copy()
     img[0,0] = (0, 0, 0)
+
     bad = (Y < 0) | (Y >= in_rows) | (X < 0) | (X >= in_cols)
     Y[bad] = 0
     X[bad] = 0
@@ -81,18 +67,44 @@ def kaleido(img, N=10, out='same', r_start=0, r_out=0, c_in=None, c_out=None,
     out[:] = img[Y, X]
 
     img[0,0] = old # restore input [0,0] to its initial value
+    return out, c_x, c_y, r_start, r_end
+
+def add_annotation(img, c_x, c_y, r_start, r_end):
+    in_rows, in_cols = img.shape[:2]
+    # draw a circle at the input c_in
+    cv2.circle(img, (c_x, c_y), 10, (0,0,255), 2)
+    # draw lines from c_in to display sample region in input image
+    l = min(max(c_x, in_cols-c_x), max(c_y, in_rows-c_y)) / 3
+    cv2.line(img, (c_x, c_y), (int(c_x + l*np.cos(r_start)),
+                               int(c_y + l*np.sin(r_start))),
+             (255,0,0), 2)
+    cv2.line(img, (c_x, c_y), (int(c_x + l * np.cos(r_end)),
+                               int(c_y + l * np.sin(r_end))),
+             (0,255,0), 2)
+
+def kaleido(img, N=10, out='same', r_start=0, r_out=0, c_in=None, c_out=None,
+            scale=1, annotate=False):
+    ''' Return a kaleidoscope from img, with specified parameters.
+
+    'img' is a 3-channel uint8 numpy array of image pixels.
+    'N' is the number of mirrors.
+    'out' can be 'same', 'full', or a 3-channel uint8 array to fill.
+    'r_start' is the selection rotation from the input image [clock radians].
+    'r_out' is the rotation of the output image result [clock radians].
+    'c_in' is the origin point of the sample sector from the input image.
+        If None defaults to the center of the input image [c_y,c_x].
+    'c_out' is the center of the kaleidoscope in the output image. If None
+        defaults to the center point of the output image [c_y, c_x].
+    'scale' is the scale of the output kaleidoscope. Default 1.
+    'annotate' is a boolean denoting whether to annotate the input image to
+        display the selected region. Default True.
+
+    '''
+    out, c_x, c_y, r_start, r_end = core(img, N, out, r_start, r_out,
+                                         c_in, c_out, scale)
 
     if annotate:
-        # draw a circle at the input c_in
-        cv2.circle(img, (c_x, c_y), 10, (0,0,255), 2)
-        # draw lines from c_in to display sample region in input image
-        l = min(max(c_x, in_cols-c_x), max(c_y, in_rows-c_y)) / 3
-        cv2.line(img, (c_x, c_y), (int(c_x + l*np.cos(r_start)),
-                                   int(c_y + l*np.sin(r_start))),
-                 (255,0,0), 2)
-        cv2.line(img, (c_x, c_y), (int(c_x + l * np.cos(r_end)),
-                                   int(c_y + l * np.sin(r_end))),
-                 (0,255,0), 2)
+        add_annotation(img, c_x, c_y, r_start, r_end)
 
     return out
 
